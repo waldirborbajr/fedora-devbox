@@ -1,0 +1,56 @@
+# Logs
+*.log
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Arquivos de backup
+*.bak
+*.old
+*.orig
+*~
+
+# Diretórios temporários
+tmp/
+temp/
+
+# Cache Python
+__pycache__/
+*.pyc
+
+# Cache Node.js
+node_modules/
+
+# Variáveis de ambiente
+.env
+.env.*
+
+# Arquivos locais do usuário
+.local/
+.cache/
+
+# Arquivos de IDEs
+.vscode/
+.idea/
+
+# Arquivos do Vim/Neovim
+*.swp
+*.swo
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos gerados para distribuição
+dist/
+build/
+
+# Arquivos compactados
+*.tar
+*.tar.gz
+*.zip
+
+# Exportações de containers
+*.oci
+*.img
