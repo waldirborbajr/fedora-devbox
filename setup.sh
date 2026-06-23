@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 echo "=================================="
 echo "Provisionando Fedora DevBox"
@@ -10,6 +10,14 @@ echo
 echo "Atualizando repositórios..."
 sudo dnf update -y
 
+
+echo
+echo "Instalando plugins DNF..."
+sudo dnf install -y dnf-plugins-core
+
+echo
+echo "Adicionando repositório HashiCorp..."
+sudo wget -O /etc/yum.repos.d/hashicorp.repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo
 
 echo
 echo "Instalando ferramentas de Desenvolvimento e DevOps..."
@@ -36,18 +44,15 @@ sudo dnf install -y \
     golang \
     nodejs \
     npm \
-    java-21-openjdk-devel \
-    maven \
-    gradle \
     podman \
     ansible \
     terraform \
     kubectl \
     helm \
-    awscli2 \
-    postgresql \
-    mysql \
-    redis
+    awscli \
+    redis \
+    php \
+    composer
 
 
 echo
@@ -57,6 +62,21 @@ sudo wget -O /usr/local/bin/yq \
 https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 
 sudo chmod +x /usr/local/bin/yq
+
+
+echo
+echo "Instalando SDKMAN..."
+curl -s "https://get.sdkman.io" | bash
+
+set +u
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+echo
+echo "Instalando Java, Maven e Gradle via SDKMAN..."
+sdk install java
+sdk install maven
+sdk install gradle
+set -u
 
 
 echo
@@ -76,6 +96,10 @@ npm --version
 python3 --version
 
 go version
+
+php --version
+
+composer --version
 
 terraform version
 
