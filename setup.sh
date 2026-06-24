@@ -59,29 +59,29 @@ https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 sudo chmod +x /usr/local/bin/yq
 
 echo
-echo "Installing SDKMAN..."
-curl -s "https://get.sdkman.io" | bash
-set +u
-source "$HOME/.sdkman/bin/sdkman-init.sh"
-
-echo
 echo "Installing Rust..."
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 echo
 
-echo "Installing Java, Maven and Gradle via SDKMAN..."
-sdk install java --default -y
-sdk install maven --default -y
-sdk install gradle --default -y
-set -u
+# echo
+# echo "Installing SDKMAN..."
+# curl -s "https://get.sdkman.io" | bash
+# set +u
+# source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+# echo "Installing Java, Maven and Gradle via SDKMAN..."
+# sdk install java --default -y
+# sdk install maven --default -y
+# sdk install gradle --default -y
+# set -u
 
 echo
 echo "Installed versions"
 echo
 
 git --version
-java -version
-mvn -version
+# java -version
+# mvn -version
 node --version
 npm --version
 python3 --version
