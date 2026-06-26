@@ -1,33 +1,32 @@
-#!/usr/bin/bash
-#
-set -euo pipefail
-
-BOX_NAME="fedora-dev"
-BOX_IMAGE="registry.fedoraproject.org/fedora:latest"
+#!/usr/bin/env bash
+BOX_NAME="devbox"
 
 box_exists() {
-  distrobox list --no-color 2>/dev/null | awk -F'|' -v name="$1" '
-    { gsub(/^[ \t]+|[ \t]+$/, "", $2); if ($2 == name) found=1 }
-    END { exit !found }
-  '
+  distrobox list --no-color 2>/dev/null | grep -q "$1"
 }
 
-if box_exists "${BOX_NAME}"; then
-  echo "O container '${BOX_NAME}' já existe."
-  echo "Escolha uma opção:"
+if box_exists "$BOX_NAME"; then
+  echo "Container '$BOX_NAME' detectado."
   echo "1) Entrar no container"
-  echo "2) Instalar mais linguagens/ferramentas"
-  read -r -p "Opção [1/2]: " opcao
+  echo "2) Instalar mais linguagens"
+  read -r -p "Opção [1/2]: " choice
 
-  if [[ "$opcao" == "2" ]]; then
-    # Executa o setup.sh novamente dentro do container para novas seleções
-    distrobox enter "${BOX_NAME}" -- bash -c "./setup.sh && ./exports.sh"
+  if [[ "$choice" == "2" ]]; then
+     distrobox enter "$BOX_NAME" -- bash -c "./setup.sh"
   fi
 else
-  # Container não existe, cria do zero
-  distrobox create --name "${BOX_NAME}" --image "${BOX_IMAGE}"
-  distrobox enter "${BOX_NAME}" -- bash -c "./setup.sh && ./exports.sh"
+  echo "Criando novo container $BOX_NAME..."
+  echo "Selecione a distro: 1) Fedora | 2) Ubuntu | 3) Arch"
+  read -r -p "Opção [1-3]: " dist_choice
+  case "$dist_choice" in
+    1) IMG="registry.fedoraproject.org/fedora:latest"; DIST="fedora" ;;
+    2) IMG="ubuntu:latest"; DIST="ubuntu" ;;
+    3) IMG="archlinux:latest"; DIST="arch" ;;
+    *) echo "Inválido"; exit 1 ;;
+  esac
+
+  distrobox create -n "$BOX_NAME" -i "$IMG"
+  distrobox enter "$BOX_NAME" -- bash -c "echo '$DIST' > /tmp/distro_target && ./setup.sh"
 fi
 
-# Entra no container ao final
-distrobox enter "${BOX_NAME}"
+distrobox enter "$BOX_NAME"
