@@ -4,7 +4,15 @@
 # ============================================================
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+# Resolve the real location even when invoked through a symlink
+# (e.g. /usr/local/bin/devbox -> /opt/devbox/start.sh)
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$SOURCE" ]]; do
+    DIR="$(cd -- "$(dirname -- "$SOURCE")" &>/dev/null && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -- "$(dirname -- "$SOURCE")" &>/dev/null && pwd)"
 source "${SCRIPT_DIR}/colors.sh"
 [[ -f "${SCRIPT_DIR}/devbox.conf" ]] && source "${SCRIPT_DIR}/devbox.conf"
 
