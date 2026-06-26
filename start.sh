@@ -35,10 +35,18 @@ if box_exists "$BOX_NAME"; then
         *) log_error "Opção inválida."; exit 1 ;;
     esac
 else
-    echo "=== Configuração Inicial ==="
-    echo "Selecione a distribuição:"
-    echo "1) Fedora | 2) Ubuntu | 3) Arch"
-    read -r -p "Opção [1-3]: " dist_choice
+    # --- Menu Melhorado ---
+    echo -e "${BLUE}=====================================================${NC}"
+    echo -e "${BLUE}          🚀 BEM-VINDO AO DEVBOX SETUP              ${NC}"
+    echo -e "${BLUE}=====================================================${NC}"
+    echo -e "Selecione a distribuição base para o seu container:"
+    echo -e ""
+    echo -e "  ${GREEN}1)${NC} Fedora"
+    echo -e "  ${GREEN}2)${NC} Ubuntu"
+    echo -e "  ${GREEN}3)${NC} Arch Linux"
+    echo -e ""
+    echo -e "${BLUE}=====================================================${NC}"
+    read -r -p "Escolha sua opção [1-3]: " dist_choice
 
     case "$dist_choice" in
         1) IMG="registry.fedoraproject.org/fedora:latest"; DIST="fedora" ;;
