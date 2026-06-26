@@ -10,6 +10,6 @@ distrobox-export --bin /usr/bin/php
 distrobox-export --bin /usr/bin/composer
 distrobox-export --bin /usr/bin/aws
 distrobox-export --bin /usr/local/bin/yq
-distrobox-export --bin "$(which mvn)"
-distrobox-export --bin "$(which java)"
-distrobox-export --bin "$(which gradle)"
+# distrobox-export --bin "$(which mvn)"
+# distrobox-export --bin "$(which java)"
+# distrobox-export --bin "$(which gradle)"

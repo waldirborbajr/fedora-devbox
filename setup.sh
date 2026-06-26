@@ -40,6 +40,7 @@ sudo dnf install -y \
     python3 \
     python3-pip \
     golang \
+    rust  \
     nodejs \
     npm \
     podman \
@@ -51,17 +52,17 @@ sudo dnf install -y \
     redis \
     php \
     composer
-    
+
 echo
 echo "Installing yq..."
 sudo wget -O /usr/local/bin/yq \
 https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 sudo chmod +x /usr/local/bin/yq
 
-echo
-echo "Installing Rust..."
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-echo
+# echo
+# echo "Installing Rust..."
+# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# echo
 
 # echo
 # echo "Installing SDKMAN..."
