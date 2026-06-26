@@ -1,75 +1,35 @@
 #!/usr/bin/env bash
-#
+# ============================================================
+# remove.sh — Limpeza segura e reversão de exports
+# ============================================================
 set -euo pipefail
 
-BOX_NAME="fedora-dev"
-DEVBOX_MANIFEST="$HOME/.config/devbox/selections.env"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+source "${SCRIPT_DIR}/colors.sh"
+[[ -f "${SCRIPT_DIR}/devbox.conf" ]] && source "${SCRIPT_DIR}/devbox.conf"
 
-# ============================================================================
-# Confirmação
-# ============================================================================
+BOX_NAME="${BOX_NAME:-devbox}"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/devbox"
 
-box_exists() {
-  distrobox list --no-color 2>/dev/null | awk -F'|' -v name="$1" '
-    { gsub(/^[ \t]+|[ \t]+$/, "", $2); if ($2 == name) found=1 }
-    END { exit !found }
-  '
-}
-
-if ! box_exists "${BOX_NAME}"; then
-  echo "Container '${BOX_NAME}' não existe. Nada a remover."
-  exit 0
-fi
-
-echo "Isso vai remover o container distrobox '${BOX_NAME}' e desfazer os"
-echo "binários exportados em ~/.local/bin, além do manifesto de seleções."
-echo "Essa ação não pode ser desfeita."
-echo
-read -r -p "Confirma a remoção de '${BOX_NAME}'? [y/N] " reply
-reply="${reply,,}"
-
-case "$reply" in
-  y|yes|s|sim) ;;
-  *)
-    echo "Cancelado. Nada foi removido."
+# Verifica se o container existe e é gerenciado por nós
+if ! distrobox list --label "managed-by=devbox" 2>/dev/null | grep -q "$BOX_NAME"; then
+    log_warn "Container '$BOX_NAME' não encontrado ou não gerenciado pelo Devbox."
     exit 0
-    ;;
-esac
-
-# ============================================================================
-# Desfaz os exports (wrappers em ~/.local/bin) antes de remover o container
-# ============================================================================
-#
-# distrobox-export --delete precisa resolver o caminho do binário de dentro
-# do container, então roda exports.sh em modo --delete lá dentro, se o
-# script existir no diretório atual ou no $HOME do container.
-
-if [[ -f "./exports.sh" ]]; then
-  echo
-  echo "Desfazendo exports anteriores..."
-  distrobox enter "${BOX_NAME}" -- bash -c "./exports.sh --delete" || \
-    echo "⚠️  Não foi possível desfazer todos os exports automaticamente (siga removendo o container)."
-else
-  echo "⚠️  exports.sh não encontrado no diretório atual — pulando limpeza de ~/.local/bin."
-  echo "   Os wrappers exportados podem continuar em ~/.local/bin e precisarão ser removidos manualmente."
 fi
 
-# ============================================================================
-# Remove o container
-# ============================================================================
+log_info "Iniciando processo de remoção..."
 
-echo
-echo "Removendo container '${BOX_NAME}'..."
-distrobox rm "${BOX_NAME}" --force
-
-# ============================================================================
-# Remove o manifesto de seleções
-# ============================================================================
-
-if [[ -f "$DEVBOX_MANIFEST" ]]; then
-  echo "Removendo manifesto de seleções ($DEVBOX_MANIFEST)..."
-  rm -f "$DEVBOX_MANIFEST"
+# 1. Remover exports registrados na pasta dedicada
+if [[ -d "$EXPORT_PATH" ]]; then
+    log_info "Limpando binários em $EXPORT_PATH..."
+    rm -rf "$EXPORT_PATH"
 fi
 
-echo
-echo "✅ Container '${BOX_NAME}' removido com sucesso."
+# 2. Remover container
+log_info "Removendo container..."
+distrobox rm "$BOX_NAME" --force
+
+# 3. Remover registros de estado
+rm -rf "$STATE_DIR"
+
+log_success "Devbox removido com sucesso. O host foi limpo."

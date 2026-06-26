@@ -1,119 +1,88 @@
 #!/usr/bin/env bash
+# ============================================================
+# exports.sh — Integração de binários Host <-> Container
+# ============================================================
+set -euo pipefail
 
-set -uo pipefail
-# (sem -e: queremos seguir exportando/removendo o resto mesmo se um binário faltar)
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+source "${SCRIPT_DIR}/colors.sh"
+[[ -f "${SCRIPT_DIR}/devbox.conf" ]] && source "${SCRIPT_DIR}/devbox.conf"
 
-# Uso: ./exports.sh           -> exporta os binários (comportamento padrão)
-#      ./exports.sh --delete  -> desfaz os exports (remove os wrappers do host)
-MODE="export"
-if [[ "${1:-}" == "--delete" ]]; then
-  MODE="delete"
+# Garante que o diretório de exportação existe no host
+# Substituímos a variável para garantir expansão correta do $HOME
+mkdir -p "${EXPORT_PATH/#$HOME/$HOME}"
+
+if [[ $# -eq 0 ]]; then 
+    log_warn "Nenhum parâmetro de linguagem fornecido para exportação."
+    exit 0
 fi
 
-DEVBOX_MANIFEST="$HOME/.config/devbox/selections.env"
+lang="$1"
 
-# Carrega o que foi escolhido na última execução do setup.sh.
-# Se o manifesto não existir (ex: setup.sh antigo, ou rodado fora desse fluxo),
-# cai no fallback de "exportar/remover se o binário existir", igual ao
-# comportamento antigo.
-HAS_MANIFEST=0
-if [[ -f "$DEVBOX_MANIFEST" ]]; then
-  # shellcheck disable=SC1090
-  source "$DEVBOX_MANIFEST"
-  HAS_MANIFEST=1
-elif [[ "$MODE" == "export" ]]; then
-  echo "⚠️  Manifesto de seleção não encontrado em $DEVBOX_MANIFEST."
-  echo "   Rode setup.sh primeiro para registrar suas escolhas; por ora,"
-  echo "   vou exportar qualquer binário que já existir no sistema."
-fi
-
-# export_if_exists <caminho ou nome de comando>
-# Resolve o caminho via `command -v` quando recebe só um nome (ex: "mvn"),
-# ou usa o caminho direto se já vier absoluto. Só age se o binário existir.
-# Respeita $MODE: "export" publica o binário no host; "delete" remove o wrapper.
-export_if_exists() {
-  local target="$1"
-  local resolved
-
-  if [[ "$target" == /* ]]; then
-    resolved="$target"
-  else
-    resolved="$(command -v "$target" 2>/dev/null || true)"
-  fi
-
-  if [[ -n "$resolved" && -x "$resolved" ]]; then
-    if [[ "$MODE" == "delete" ]]; then
-      echo "Removendo export: $resolved"
-      distrobox-export --bin "$resolved" --delete
+# Função centralizada para exportar binários de forma segura
+export_bin() {
+    local bin=$1
+    local path="$(command -v "$bin" 2>/dev/null || true)"
+    if [[ -n "$path" ]]; then
+        log_info "Exportando '${bin}' para ${EXPORT_PATH}..."
+        distrobox-export --bin "$path" --export-path "${EXPORT_PATH/#$HOME/$HOME}"
     else
-      echo "Exportando: $resolved"
-      distrobox-export --bin "$resolved"
+        log_warn "Binário '${bin}' não encontrado no container, ignorando exportação."
     fi
-  else
-    echo "⚠️  Pulando '$target' (não instalado)"
-  fi
 }
 
-# export_language <flag_var> <rotulo> <target1> [target2] [target3] ...
-# Só age sobre os binários da linguagem se a flag do manifesto for 1.
-# Sem manifesto (HAS_MANIFEST=0), cai no comportamento antigo: tenta agir
-# e deixa export_if_exists decidir pela existência do binário.
-export_language() {
-  local flag_var="$1"
-  local label="$2"
-  shift 2
+case "$lang" in
+    # Utilidades Gerais
+    "utils.sh")
+        export_bin "bat"
+        export_bin "fd"
+        export_bin "k9s"
+        ;;
 
-  if [[ "$HAS_MANIFEST" -eq 1 ]]; then
-    local flag_value="${!flag_var:-0}"
-    if [[ "$flag_value" -ne 1 ]]; then
-      echo "⏭️  $label não foi selecionado no setup.sh — pulando."
-      return
-    fi
-  fi
+    # Linguagens e Runtimes
+    "python.sh")
+        export_bin "python3"
+        export_bin "pip3"
+        ;;
+        
+    "go.sh")
+        export_bin "go"
+        ;;
 
-  local target
-  for target in "$@"; do
-    export_if_exists "$target"
-  done
-}
+    "nodes.sh")
+        export_bin "node"
+        export_bin "npm"
+        ;;
 
-# ============================================================================
-# Ferramentas core (sempre instaladas pelo setup.sh)
-# ============================================================================
+    "rust.sh")
+        export_bin "cargo"
+        export_bin "rustc"
+        ;;
 
-export_if_exists /usr/bin/nvim
-export_if_exists /usr/bin/tmux
-export_if_exists /usr/bin/kubectl
-export_if_exists /usr/bin/terraform
-export_if_exists /usr/bin/helm
-export_if_exists /usr/bin/ansible
-export_if_exists /usr/bin/aws
-export_if_exists /usr/local/bin/yq
+    "php.sh")
+        export_bin "php"
+        export_bin "composer"
+        ;;
 
-# ============================================================================
-# Linguagens (instalação opcional/interativa no setup.sh)
-# ============================================================================
+    "java.sh")
+        # Java/Maven SDKMAN (Caminho customizado)
+        distrobox-export --bin "$HOME/.sdkman/candidates/java/current/bin/java" --export-path "${EXPORT_PATH/#$HOME/$HOME}" || true
+        distrobox-export --bin "$HOME/.sdkman/candidates/maven/current/bin/mvn" --export-path "${EXPORT_PATH/#$HOME/$HOME}" || true
+        ;;
 
-export_language INSTALL_GO   "Go"   /usr/bin/go
+    "lua.sh")
+        export_bin "lua"
+        export_bin "luarocks"
+        ;;
 
-# Rust (via rustup, fica em $HOME/.cargo/bin — não tem caminho fixo em /usr/bin)
-export_language INSTALL_RUST "Rust" rustc cargo
+    "infra.sh")
+        export_bin "docker"
+        export_bin "podman"
+        export_bin "kubectl"
+        export_bin "helm"
+        ;;
 
-export_language INSTALL_NODE "Node.js" /usr/bin/node /usr/bin/npm
-
-export_language INSTALL_PHP  "PHP" /usr/bin/php /usr/bin/composer laravel
-
-# Java / Maven / Gradle (via SDKMAN — exige sourcing do sdkman-init.sh
-# antes deste script para que `which`/`command -v` os encontre)
-if [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]]; then
-  # shellcheck disable=SC1090
-  source "$HOME/.sdkman/bin/sdkman-init.sh"
-fi
-export_language INSTALL_JAVA "Java" java mvn gradle
-
-echo
-if [[ "$MODE" == "delete" ]]; then
-  echo "Remoção dos exports concluída."
-else
-  echo "Exportação concluída."
-fi
+    *) 
+        log_warn "Linguagem/Plugin '$lang' não configurada para exportação."
+        ;;
+esac
