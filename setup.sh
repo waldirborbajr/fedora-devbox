@@ -96,6 +96,15 @@ select lang in "${options[@]}"; do
     grep -qxF "$lang" "${STATE_DIR}/installed_langs" \
         || echo "$lang" >> "${STATE_DIR}/installed_langs"
 
+    if [[ ! -f "${STATE_DIR}/core_installed" ]]; then
+        log_info "Provisioning core tools..."
+        install_core_tools
+        # Exporta o Core automaticamente na primeira vez
+        "${SCRIPT_DIR}/exports.sh" "utils" 
+        touch "${STATE_DIR}/core_installed"
+        log_success "Core tools provisioned and exported."
+    fi
+
     "${SCRIPT_DIR}/exports.sh" "$lang"
 
     log_success "$lang installed and exported."

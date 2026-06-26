@@ -1,83 +1,77 @@
-# Distrobox Fedora DevBox
+# ============================================================
+# README.md - Devbox: Ambiente de Desenvolvimento Modular
+# ============================================================
 
-[Distrobox](https://github.com/89luca89/distrobox) cria containers que se integram perfeitamente com o sistema host — compartilhando diretório home, dispositivos USB, áudio, Wayland/X11 e systemd.
+# O que é o Devbox?
+O Devbox é uma solução de orquestração para Distrobox que permite criar ambientes de desenvolvimento isolados, reprodutíveis e configuráveis, mantendo a integração perfeita com o seu sistema host.
 
-**Benefícios:**
-- Ambiente de desenvolvimento isolado sem poluir o host
-- Acesso direto a arquivos e ferramentas do container pelo terminal do host
-- Múltiplos ambientes (Fedora, Ubuntu, Arch) lado a lado
-- Ferramentas exportadas aparecem como se estivessem instaladas nativamente
+# Filosofia do Projeto
+- Isolamento: Ferramentas de desenvolvimento contidas em containers, sem poluir o seu sistema operacional principal.
+- Integração: Ferramentas instaladas dentro do container aparecem no seu terminal host como se fossem nativas.
+- Modularidade: Instale apenas o que precisa. O Core é automático; linguagens são plugins.
+- Segurança: Containers gerenciados com etiquetas (labels), garantindo que a limpeza seja segura e não afete outros projetos.
 
-## Estrutura do projeto
-
-```
+# Estrutura do Projeto
 .
-├── start.sh        # ponto de entrada: cria/entra no container
-├── setup.sh        # menu de instalação de linguagens
-├── exports.sh       # exporta um binário do container para o host
-├── remove.sh       # remove o container e os binários exportados
-├── colors.sh       # helpers de log coloridos (ANSI)
-├── lib/            # scripts por distro (core tools + install_pkg)
+├── devbox.conf      # Configurações centralizadas (edite aqui)
+├── install.sh       # Script de instalação inicial
+├── start.sh         # Ponto de entrada: orquestra criação e acesso
+├── setup.sh         # Menu interativo de instalação de linguagens
+├── exports.sh       # Lógica de integração de binários (Host <-> Container)
+├── remove.sh        # Limpeza segura (container + binários exportados)
+├── colors.sh        # Helpers de logs coloridos
+├── lib/             # Bibliotecas de sistema (scripts por distro)
 │   ├── fedora.sh
 │   ├── ubuntu.sh
 │   └── arch.sh
-└── langs/          # scripts por linguagem (install_lang)
+└── langs/           # Plugins de linguagem (scripts de instalação)
     ├── go.sh
     ├── nodes.sh
     ├── php.sh
     ├── rust.sh
     └── java.sh
-```
 
-## Pré-requisitos
+# Pré-requisitos
+Instale Podman e Distrobox conforme a sua distribuição:
 
-Instale Podman e Distrobox:
+Debian/Ubuntu:
+  sudo apt update && sudo apt install podman distrobox -y
 
-**Debian/Ubuntu:**
-```bash
-sudo apt update && sudo apt install podman distrobox -y
-```
+Fedora:
+  sudo dnf install podman distrobox -y
 
-**Fedora:**
-```bash
-sudo dnf install podman distrobox -y
-```
+Arch Linux:
+  sudo pacman -S podman distrobox
 
-**Arch Linux:**
-```bash
-sudo pacman -S podman distrobox
-```
+# Instalação
+Para instalar o Devbox no seu sistema, execute o instalador:
 
-## Quick start
+chmod +x install.sh
+sudo ./install.sh
 
-```bash
-git clone https://github.com/rmsaitam/fedora-devbox.git
-cd fedora-devbox
+Isso moverá os scripts para /opt/devbox e criará um link simbólico no /usr/local/bin, permitindo que você execute apenas "devbox" no terminal.
 
-./start.sh
-```
+# Configuração
+Antes de rodar pela primeira vez, abra o arquivo "devbox.conf" na raiz do projeto. Ele é o seu painel de controle:
+- BOX_NAME: Nome do container (padrão: devbox).
+- EXPORT_PATH: Onde os links dos programas serão criados no seu sistema (padrão: $HOME/.local/bin).
 
-`start.sh` cria o container (perguntando a distro), executa `setup.sh` dentro dele e abre uma sessão interativa. Da segunda vez em diante, ele detecta o container existente e oferece entrar nele ou instalar mais linguagens.
+# Guia de Uso
 
-Após instalar uma linguagem pelo menu, as ferramentas (`go`, `node`, `php`, `cargo`, `java`, etc.) estarão disponíveis tanto dentro do container quanto no terminal do próprio host, via exportação automática do Distrobox.
+1. Iniciar o Ambiente:
+   Basta digitar "devbox" no terminal. Na primeira execução, você escolherá sua distribuição base.
 
-Para remover tudo (container + binários exportados):
+2. Instalar mais Linguagens:
+   Se o container já existir, ao digitar "devbox", escolha a opção 2 no menu para adicionar novas linguagens (elas serão baixadas e integradas automaticamente).
 
-```bash
-./remove.sh
-```
+3. Remover o Ambiente:
+   Para remover o container e limpar todos os binários exportados do seu computador:
+   ./remove.sh
 
----
+# Como estender (Criar Plugins)
+Para adicionar uma nova linguagem, basta criar um arquivo .sh na pasta langs/ seguindo o padrão de função 'install_lang'. O 'setup.sh' reconhecerá automaticamente o novo arquivo no menu.
 
-### SDKMAN
-
-O `langs/java.sh` instala o [SDKMAN](https://sdkman.io) e a versão **mais recente** de Java, Maven e Gradle.
-
-Para instalar uma versão específica (ex: Java 21):
-
-```bash
-source "$HOME/.sdkman/bin/sdkman-init.sh"
-sdk list java           # lista versões disponíveis
-sdk install java 21.0.2-tem
-sdk default java 21.0.2-tem   # define como padrão
-```
+# Troubleshooting
+- Permissões: Certifique-se de que o seu usuário tem permissão para rodar podman sem sudo.
+- Ambiente Corrompido: Se algo falhar, o script remove.sh garante uma limpeza segura.
+- Logs de Erro: Em caso de falhas, consulte /tmp/devbox_debug.log para um diagnóstico detalhado.
