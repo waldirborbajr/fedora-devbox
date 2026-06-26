@@ -5,8 +5,15 @@ set -euo pipefail
 BOX_NAME="fedora-dev"
 BOX_IMAGE="registry.fedoraproject.org/fedora:latest"
 
+box_exists() {
+  distrobox list --no-color 2>/dev/null | awk -F'|' -v name="$1" '
+    { gsub(/^[ \t]+|[ \t]+$/, "", $2); if ($2 == name) found=1 }
+    END { exit !found }
+  '
+}
+
 # Cria o container apenas se ele ainda não existir (idempotente)
-if ! distrobox list --no-color 2>/dev/null | grep -qE "^\s*${BOX_NAME}\b"; then
+if ! box_exists "${BOX_NAME}"; then
   distrobox create \
     --name "${BOX_NAME}" \
     --image "${BOX_IMAGE}"
