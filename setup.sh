@@ -10,17 +10,16 @@ fi
 
 source "./lib/${DISTRO_TARGET}.sh"
 
-# --- Parte 1: Instalação Automática Core ---
-# Usamos um arquivo de controle para não reinstalar o core toda vez que abrir o menu
+# --- Instalação Automática Core (apenas na primeira vez) ---
 if [[ ! -f /tmp/core_installed ]]; then
     echo "=== Provisionando Core: ${DISTRO_TARGET} ==="
     install_core_tools
     touch /tmp/core_installed
 else
-    echo "=== Core já instalado, pulando... ==="
+    echo "=== Core já instalado. ==="
 fi
 
-# --- Parte 2: Menu Interativo de Linguagens ---
+# --- Menu Interativo de Linguagens ---
 echo "=== Menu de Linguagens ==="
 echo "Selecione uma linguagem para instalar (ou '0' para sair):"
 options=($(ls langs/))
@@ -31,7 +30,11 @@ select lang in "${options[@]}"; do
     echo "Instalando $lang..."
     source "langs/$lang"
     install_lang
-    echo "✅ $lang instalado."
+
+    # Exporta apenas a linguagem instalada
+    ./exports.sh "$lang"
+
+    echo "✅ $lang instalado e exportado com sucesso."
     break
   else
     echo "Opção inválida."
