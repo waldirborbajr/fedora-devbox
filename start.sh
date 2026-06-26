@@ -64,23 +64,35 @@ if box_exists "$BOX_NAME"; then
     esac
 else
     clear
-    echo -e "${BLUE}=====================================================${NC}"
-    echo -e "${BLUE}          ✨ CONFIGURAÇÃO INICIAL DEVBOX            ${NC}"
-    echo -e "${BLUE}=====================================================${NC}"
-    echo -e "Selecione a distribuição base para o seu container:"
-    echo -e ""
-    echo -e "  ${GREEN}1)${NC} Fedora"
-    echo -e "  ${GREEN}2)${NC} Ubuntu"
-    echo -e "  ${GREEN}3)${NC} Arch Linux"
-    echo -e ""
-    echo -e "${BLUE}=====================================================${NC}"
-    read -r -p "Opção [1-3]: " dist_choice
 
-    case "$dist_choice" in
-        1) IMG="registry.fedoraproject.org/fedora:latest"; DIST="fedora" ;;
-        2) IMG="ubuntu:latest"; DIST="ubuntu" ;;
-        3) IMG="archlinux:latest"; DIST="arch" ;;
-        *) log_error "Opção inválida."; exit 1 ;;
+    if [[ "${DEFAULT_DISTRO:-}" =~ ^(fedora|ubuntu|arch)$ ]]; then
+        DIST="$DEFAULT_DISTRO"
+        log_info "DEFAULT_DISTRO definido em devbox.conf: usando '${DIST}'."
+    else
+        echo -e "${BLUE}=====================================================${NC}"
+        echo -e "${BLUE}          ✨ CONFIGURAÇÃO INICIAL DEVBOX            ${NC}"
+        echo -e "${BLUE}=====================================================${NC}"
+        echo -e "Selecione a distribuição base para o seu container:"
+        echo -e ""
+        echo -e "  ${GREEN}1)${NC} Fedora"
+        echo -e "  ${GREEN}2)${NC} Ubuntu"
+        echo -e "  ${GREEN}3)${NC} Arch Linux"
+        echo -e ""
+        echo -e "${BLUE}=====================================================${NC}"
+        read -r -p "Opção [1-3]: " dist_choice
+
+        case "$dist_choice" in
+            1) DIST="fedora" ;;
+            2) DIST="ubuntu" ;;
+            3) DIST="arch" ;;
+            *) log_error "Opção inválida."; exit 1 ;;
+        esac
+    fi
+
+    case "$DIST" in
+        fedora) IMG="registry.fedoraproject.org/fedora:latest" ;;
+        ubuntu) IMG="ubuntu:latest" ;;
+        arch)   IMG="archlinux:latest" ;;
     esac
 
     echo "$DIST" > "${STATE_DIR}/distro"
