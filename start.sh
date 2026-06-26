@@ -4,6 +4,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+# shellcheck source=./colors.sh
+source "${SCRIPT_DIR}/colors.sh"
+
 BOX_NAME="devbox"
 
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/devbox"
@@ -11,7 +15,7 @@ STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/devbox"
 mkdir -p "$STATE_DIR"
 
 if ! command -v distrobox >/dev/null 2>&1; then
-    echo "Error: distrobox is not installed."
+    log_error "distrobox is not installed."
     exit 1
 fi
 
@@ -32,10 +36,10 @@ if box_exists "$BOX_NAME"; then
         1)
             ;;
         2)
-            distrobox enter "$BOX_NAME" -- bash -c "./setup.sh"
+            distrobox enter "$BOX_NAME" -- bash -c "cd '${SCRIPT_DIR}' && ./setup.sh"
             ;;
         *)
-            echo "Invalid option"
+            log_error "Invalid option"
             exit 1
             ;;
     esac
@@ -63,26 +67,29 @@ else
             DIST="arch"
             ;;
         *)
-            echo "Invalid option"
+            log_error "Invalid option"
             exit 1
             ;;
     esac
 
     echo "$DIST" > "${STATE_DIR}/distro"
 
-    echo "Creating container..."
+    log_info "Creating container..."
 
     if ! distrobox create \
         --name "$BOX_NAME" \
         --image "$IMG"; then
 
-        echo "Failed to create container."
+        log_error "Failed to create container."
         exit 1
     fi
+
+    log_success "Container created."
 
     distrobox enter "$BOX_NAME" -- bash -c "
         mkdir -p '${STATE_DIR}' &&
         echo '${DIST}' > '${STATE_DIR}/distro' &&
+        cd '${SCRIPT_DIR}' &&
         ./setup.sh
     "
 fi

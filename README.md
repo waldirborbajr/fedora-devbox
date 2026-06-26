@@ -8,6 +8,27 @@
 - Múltiplos ambientes (Fedora, Ubuntu, Arch) lado a lado
 - Ferramentas exportadas aparecem como se estivessem instaladas nativamente
 
+## Estrutura do projeto
+
+```
+.
+├── start.sh        # ponto de entrada: cria/entra no container
+├── setup.sh        # menu de instalação de linguagens
+├── exports.sh       # exporta um binário do container para o host
+├── remove.sh       # remove o container e os binários exportados
+├── colors.sh       # helpers de log coloridos (ANSI)
+├── lib/            # scripts por distro (core tools + install_pkg)
+│   ├── fedora.sh
+│   ├── ubuntu.sh
+│   └── arch.sh
+└── langs/          # scripts por linguagem (install_lang)
+    ├── go.sh
+    ├── nodes.sh
+    ├── php.sh
+    ├── rust.sh
+    └── java.sh
+```
+
 ## Pré-requisitos
 
 Instale Podman e Distrobox:
@@ -33,23 +54,24 @@ sudo pacman -S podman distrobox
 git clone https://github.com/rmsaitam/fedora-devbox.git
 cd fedora-devbox
 
-distrobox create \
-  --name fedora-dev \
-  --image registry.fedoraproject.org/fedora:latest
-
-distrobox enter fedora-dev
-
-./setup.sh
-./exports.sh
+./start.sh
 ```
 
-Após a execução, as ferramentas instaladas (`nvim`, `kubectl`, `terraform`, `php`, `aws`, etc.) estarão disponíveis no terminal do próprio host.
+`start.sh` cria o container (perguntando a distro), executa `setup.sh` dentro dele e abre uma sessão interativa. Da segunda vez em diante, ele detecta o container existente e oferece entrar nele ou instalar mais linguagens.
+
+Após instalar uma linguagem pelo menu, as ferramentas (`go`, `node`, `php`, `cargo`, `java`, etc.) estarão disponíveis tanto dentro do container quanto no terminal do próprio host, via exportação automática do Distrobox.
+
+Para remover tudo (container + binários exportados):
+
+```bash
+./remove.sh
+```
 
 ---
 
 ### SDKMAN
 
-O `setup.sh` instala o [SDKMAN](https://sdkman.io) e a versão **mais recente** de Java, Maven e Gradle.
+O `langs/java.sh` instala o [SDKMAN](https://sdkman.io) e a versão **mais recente** de Java, Maven e Gradle.
 
 Para instalar uma versão específica (ex: Java 21):
 

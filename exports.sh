@@ -1,31 +1,51 @@
 #!/usr/bin/env bash
-# Uso: ./exports.sh [nome_da_lang]
+# ============================================================
+# exports.sh
+# ============================================================
+# Exports a single language's binary from inside the container
+# to the host using distrobox-export.
+#
+# Usage: ./exports.sh <lang_file>
+#   e.g. ./exports.sh go.sh
 
-LANG_TO_EXPORT=$1
+set -euo pipefail
 
-case "$LANG_TO_EXPORT" in
-    "go.sh")
-        distrobox-export --bin "/usr/bin/go" --export-path "$HOME/.local/bin"
-        ;;
-    "node.sh")
-        distrobox-export --bin "/usr/bin/node" --export-path "$HOME/.local/bin"
-        distrobox-export --bin "/usr/bin/npm" --export-path "$HOME/.local/bin"
-        ;;
-    "rust.sh")
-        # Cargo instalado via rustup geralmente fica em $HOME/.cargo/bin
-        distrobox-export --bin "$HOME/.cargo/bin/cargo" --export-path "$HOME/.local/bin"
-        distrobox-export --bin "$HOME/.cargo/bin/rustc" --export-path "$HOME/.local/bin"
-        ;;
-    "php.sh")
-        distrobox-export --bin "/usr/bin/php" --export-path "$HOME/.local/bin"
-        distrobox-export --bin "/usr/bin/composer" --export-path "$HOME/.local/bin"
-        ;;
-    "java.sh")
-        # SDKMAN exporta os binários dinamicamente
-        distrobox-export --bin "$HOME/.sdkman/candidates/java/current/bin/java" --export-path "$HOME/.local/bin"
-        distrobox-export --bin "$HOME/.sdkman/candidates/maven/current/bin/mvn" --export-path "$HOME/.local/bin"
-        ;;
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+# shellcheck source=./colors.sh
+source "${SCRIPT_DIR}/colors.sh"
+
+if [[ $# -eq 0 ]]; then
+    log_error "No language specified."
+    echo "Usage: $0 <lang_file>"
+    exit 1
+fi
+
+lang="$1"
+
+case "$lang" in
+    go.sh)   bin_name="go" ;;
+    nodes.sh) bin_name="node" ;;
+    rust.sh) bin_name="cargo" ;;
+    php.sh)  bin_name="php" ;;
+    java.sh) bin_name="java" ;;
     *)
-        echo "Linguagem $LANG_TO_EXPORT não configurada para exportação automática."
+        log_error "Unknown language file: $lang"
+        exit 1
         ;;
 esac
+
+bin_path="$(command -v "$bin_name" 2>/dev/null || true)"
+
+if [[ -z "$bin_path" ]]; then
+    log_error "Binary '$bin_name' not found in PATH. Was $lang installed correctly?"
+    exit 1
+fi
+
+log_info "Exporting '${bin_name}' to the host..."
+
+if distrobox-export --bin "$bin_path"; then
+    log_success "'${bin_name}' is now available on the host."
+else
+    log_error "Failed to export '${bin_name}'."
+    exit 1
+fi

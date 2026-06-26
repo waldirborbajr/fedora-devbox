@@ -5,7 +5,11 @@ install_lang() {
     if [[ ! -d "$HOME/.sdkman" ]]; then
         echo "Installing SDKMAN..."
 
-        curl -fsSL https://get.sdkman.io | bash
+        curl --proto '=https' \
+            --tlsv1.2 \
+            -fsSL \
+            https://get.sdkman.io \
+            | bash
     fi
 
     # shellcheck disable=SC1091
