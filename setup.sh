@@ -53,8 +53,14 @@ while true; do
 
     [[ "$choice" == "0" ]] && break
 
+    if ! [[ "$choice" =~ ^[0-9]+$ ]]; then
+        log_error "Opção inválida."
+        sleep 1
+        continue
+    fi
+
     idx=$((choice-1))
-    selected_lang="${options[$idx]}"
+    selected_lang="${options[$idx]:-}"
 
     if [[ -z "${selected_lang:-}" ]]; then
         log_error "Opção inválida."

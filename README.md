@@ -31,7 +31,10 @@ O Devbox é uma solução de orquestração para Distrobox que permite criar amb
     ├── nodes.sh
     ├── php.sh
     ├── rust.sh
-    └── java.sh
+    ├── java.sh
+    ├── python.sh
+    ├── lua.sh
+    └── infra.sh
 ```
 
 # Pré-requisitos

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # langs/go.sh
 
 install_lang() {
