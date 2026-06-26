@@ -1,21 +1,31 @@
 #!/usr/bin/env bash
-set -euo pipefail
-BOX_NAME="devbox"
+# Uso: ./exports.sh [nome_da_lang]
 
-if ! distrobox list --no-color 2>/dev/null | grep -q "$BOX_NAME"; then
-    echo "Container não encontrado."
-    exit 0
-fi
+LANG_TO_EXPORT=$1
 
-echo "Removendo atalhos..."
-if [[ -f /tmp/installed_langs_list ]]; then
-    while read -r lang; do
-        bin_name=${lang%.*}
-        rm -f "$HOME/.local/bin/$bin_name"
-    done < /tmp/installed_langs_list
-fi
-
-echo "Removendo container..."
-distrobox rm "$BOX_NAME" --force
-rm -f /tmp/core_installed /tmp/distro_target /tmp/installed_langs_list 2>/dev/null
-echo "✅ Limpeza concluída."
+case "$LANG_TO_EXPORT" in
+    "go.sh")
+        distrobox-export --bin "/usr/bin/go" --export-path "$HOME/.local/bin"
+        ;;
+    "node.sh")
+        distrobox-export --bin "/usr/bin/node" --export-path "$HOME/.local/bin"
+        distrobox-export --bin "/usr/bin/npm" --export-path "$HOME/.local/bin"
+        ;;
+    "rust.sh")
+        # Cargo instalado via rustup geralmente fica em $HOME/.cargo/bin
+        distrobox-export --bin "$HOME/.cargo/bin/cargo" --export-path "$HOME/.local/bin"
+        distrobox-export --bin "$HOME/.cargo/bin/rustc" --export-path "$HOME/.local/bin"
+        ;;
+    "php.sh")
+        distrobox-export --bin "/usr/bin/php" --export-path "$HOME/.local/bin"
+        distrobox-export --bin "/usr/bin/composer" --export-path "$HOME/.local/bin"
+        ;;
+    "java.sh")
+        # SDKMAN exporta os binários dinamicamente
+        distrobox-export --bin "$HOME/.sdkman/candidates/java/current/bin/java" --export-path "$HOME/.local/bin"
+        distrobox-export --bin "$HOME/.sdkman/candidates/maven/current/bin/mvn" --export-path "$HOME/.local/bin"
+        ;;
+    *)
+        echo "Linguagem $LANG_TO_EXPORT não configurada para exportação automática."
+        ;;
+esac
