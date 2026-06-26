@@ -1,51 +1,43 @@
 #!/usr/bin/env bash
-# ============================================================
-# exports.sh
-# ============================================================
-# Exports a single language's binary from inside the container
-# to the host using distrobox-export.
-#
-# Usage: ./exports.sh <lang_file>
-#   e.g. ./exports.sh go.sh
-
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
-# shellcheck source=./colors.sh
 source "${SCRIPT_DIR}/colors.sh"
 
 if [[ $# -eq 0 ]]; then
-    log_error "No language specified."
-    echo "Usage: $0 <lang_file>"
+    log_error "Nenhuma linguagem especificada."
     exit 1
 fi
 
 lang="$1"
 
+# Função auxiliar para evitar repetição
+export_bin() {
+    local bin=$1
+    local path="$(command -v "$bin" 2>/dev/null || true)"
+    if [[ -n "$path" ]]; then
+        log_info "Exportando '${bin}'..."
+        distrobox-export --bin "$path" --export-path "$HOME/.local/bin"
+    else
+        log_warn "Binário '$bin' não encontrado no PATH."
+    fi
+}
+
 case "$lang" in
-    go.sh)   bin_name="go" ;;
-    nodes.sh) bin_name="node" ;;
-    rust.sh) bin_name="cargo" ;;
-    php.sh)  bin_name="php" ;;
-    java.sh) bin_name="java" ;;
+    go.sh)   export_bin "go" ;;
+    nodes.sh) export_bin "node"; export_bin "npm" ;;
+    rust.sh)  export_bin "cargo"; export_bin "rustc" ;;
+    php.sh)   export_bin "php"; export_bin "composer" ;;
+    java.sh)  
+        # SDKMAN precisa de caminho absoluto, export_bin não funcionará direto
+        distrobox-export --bin "$HOME/.sdkman/candidates/java/current/bin/java" --export-path "$HOME/.local/bin" || true
+        distrobox-export --bin "$HOME/.sdkman/candidates/maven/current/bin/mvn" --export-path "$HOME/.local/bin" || true
+        ;;
+    "utils")
+        export_bin "bat"; export_bin "fd"; export_bin "k9s"
+        ;;    
     *)
-        log_error "Unknown language file: $lang"
+        log_error "Linguagem '$lang' não configurada."
         exit 1
         ;;
 esac
-
-bin_path="$(command -v "$bin_name" 2>/dev/null || true)"
-
-if [[ -z "$bin_path" ]]; then
-    log_error "Binary '$bin_name' not found in PATH. Was $lang installed correctly?"
-    exit 1
-fi
-
-log_info "Exporting '${bin_name}' to the host..."
-
-if distrobox-export --bin "$bin_path"; then
-    log_success "'${bin_name}' is now available on the host."
-else
-    log_error "Failed to export '${bin_name}'."
-    exit 1
-fi
