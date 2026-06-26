@@ -12,15 +12,22 @@ box_exists() {
   '
 }
 
-# Cria o container apenas se ele ainda não existir (idempotente)
-if ! box_exists "${BOX_NAME}"; then
-  distrobox create \
-    --name "${BOX_NAME}" \
-    --image "${BOX_IMAGE}"
+if box_exists "${BOX_NAME}"; then
+  echo "O container '${BOX_NAME}' já existe."
+  echo "Escolha uma opção:"
+  echo "1) Entrar no container"
+  echo "2) Instalar mais linguagens/ferramentas"
+  read -r -p "Opção [1/2]: " opcao
+
+  if [[ "$opcao" == "2" ]]; then
+    # Executa o setup.sh novamente dentro do container para novas seleções
+    distrobox enter "${BOX_NAME}" -- bash -c "./setup.sh && ./exports.sh"
+  fi
+else
+  # Container não existe, cria do zero
+  distrobox create --name "${BOX_NAME}" --image "${BOX_IMAGE}"
+  distrobox enter "${BOX_NAME}" -- bash -c "./setup.sh && ./exports.sh"
 fi
 
-# Executa os scripts de setup DENTRO do container, sem abrir um shell interativo
-distrobox enter "${BOX_NAME}" -- bash -c "./setup.sh && ./exports.sh"
-
-# Só depois de tudo pronto, abre o shell interativo pra você usar o ambiente
+# Entra no container ao final
 distrobox enter "${BOX_NAME}"
