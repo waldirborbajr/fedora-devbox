@@ -1,21 +1,44 @@
+# ============================================================
+# remove.sh
+# ============================================================
 #!/usr/bin/env bash
 set -euo pipefail
+
 BOX_NAME="devbox"
 
-if ! distrobox list --no-color 2>/dev/null | grep -q "$BOX_NAME"; then
-    echo "Container não encontrado."
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/devbox"
+LANG_FILE="${STATE_DIR}/installed_langs"
+
+if ! distrobox list --no-color 2>/dev/null | awk '{print $1}' | grep -qx "$BOX_NAME"; then
+    echo "Container not found."
     exit 0
 fi
 
-echo "Removendo atalhos..."
-if [[ -f /tmp/installed_langs_list ]]; then
+echo "Removing exported binaries..."
+
+if [[ -f "$LANG_FILE" ]]; then
     while read -r lang; do
-        bin_name=${lang%.*}
+
+        [[ -z "$lang" ]] && continue
+
+        case "$lang" in
+            go.sh)   bin_name="go" ;;
+            node.sh) bin_name="node" ;;
+            rust.sh) bin_name="cargo" ;;
+            php.sh)  bin_name="php" ;;
+            java.sh) bin_name="java" ;;
+            *) continue ;;
+        esac
+
         rm -f "$HOME/.local/bin/$bin_name"
-    done < /tmp/installed_langs_list
+
+    done < "$LANG_FILE"
 fi
 
-echo "Removendo container..."
+echo "Removing container..."
+
 distrobox rm "$BOX_NAME" --force
-rm -f /tmp/core_installed /tmp/distro_target /tmp/installed_langs_list 2>/dev/null
-echo "✅ Limpeza concluída."
+
+rm -rf "$STATE_DIR"
+
+echo "✅ Cleanup completed."
