@@ -10,7 +10,6 @@ source "${SCRIPT_DIR}/colors.sh"
 
 BOX_NAME="${BOX_NAME:-devbox}"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/devbox"
-LANG_FILE="${STATE_DIR}/installed_langs"
 
 # Verifica se o container existe e é gerenciado por nós
 if ! distrobox list --label "managed-by=devbox" 2>/dev/null | grep -q "$BOX_NAME"; then
@@ -20,21 +19,10 @@ fi
 
 log_info "Iniciando processo de remoção..."
 
-# 1. Remover exports registrados
-if [[ -f "$LANG_FILE" ]]; then
-    while read -r lang; do
-        [[ -z "$lang" ]] && continue
-        # Executa o export para remover (opcional: pode criar uma flag --delete no exports.sh)
-        # Aqui removemos fisicamente os links criados pelo usuário
-        case "$lang" in
-            go.sh) rm -f "$HOME/.local/bin/go" ;;
-            nodes.sh) rm -f "$HOME/.local/bin/node" "$HOME/.local/bin/npm" ;;
-            rust.sh) rm -f "$HOME/.local/bin/cargo" "$HOME/.local/bin/rustc" ;;
-            php.sh) rm -f "$HOME/.local/bin/php" "$HOME/.local/bin/composer" ;;
-            java.sh) rm -f "$HOME/.local/bin/java" "$HOME/.local/bin/mvn" ;;
-            utils) rm -f "$HOME/.local/bin/bat" "$HOME/.local/bin/fd" "$HOME/.local/bin/k9s" ;;
-        esac
-    done < "$LANG_FILE"
+# 1. Remover exports registrados na pasta dedicada
+if [[ -d "$EXPORT_PATH" ]]; then
+    log_info "Limpando binários em $EXPORT_PATH..."
+    rm -rf "$EXPORT_PATH"
 fi
 
 # 2. Remover container

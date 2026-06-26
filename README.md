@@ -12,6 +12,8 @@ O Devbox é uma solução de orquestração para Distrobox que permite criar amb
 - Segurança: Containers gerenciados com etiquetas (labels), garantindo que a limpeza seja segura e não afete outros projetos.
 
 # Estrutura do Projeto
+
+```sh
 .
 ├── devbox.conf      # Configurações centralizadas (edite aqui)
 ├── install.sh       # Script de instalação inicial
@@ -30,6 +32,7 @@ O Devbox é uma solução de orquestração para Distrobox que permite criar amb
     ├── php.sh
     ├── rust.sh
     └── java.sh
+```
 
 # Pré-requisitos
 Instale Podman e Distrobox conforme a sua distribuição:
@@ -43,11 +46,22 @@ Fedora:
 Arch Linux:
   sudo pacman -S podman distrobox
 
+# Configuração Importante (Isolamento)
+Para que o seu host reconheça os binários exportados pelo Devbox, adicione o seguinte diretório ao seu arquivo de configuração de shell (ex: ~/.bashrc ou ~/.zshrc):
+
+```sh
+export PATH="$HOME/.local/devbox/bin:$PATH"
+```
+
+Após adicionar, execute `source ~/.bashrc` (ou o arquivo correspondente) para aplicar a mudança.
+
 # Instalação
 Para instalar o Devbox no seu sistema, execute o instalador:
 
+```sh
 chmod +x install.sh
 sudo ./install.sh
+```
 
 Isso moverá os scripts para /opt/devbox e criará um link simbólico no /usr/local/bin, permitindo que você execute apenas "devbox" no terminal.
 
@@ -66,7 +80,10 @@ Antes de rodar pela primeira vez, abra o arquivo "devbox.conf" na raiz do projet
 
 3. Remover o Ambiente:
    Para remover o container e limpar todos os binários exportados do seu computador:
-   ./remove.sh
+
+```sh   
+./remove.sh
+```
 
 # Como estender (Criar Plugins)
 Para adicionar uma nova linguagem, basta criar um arquivo .sh na pasta langs/ seguindo o padrão de função 'install_lang'. O 'setup.sh' reconhecerá automaticamente o novo arquivo no menu.
