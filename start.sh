@@ -98,7 +98,7 @@ else
     echo "$DIST" > "${STATE_DIR}/distro"
     
     log_info "Criando container '${BOX_NAME}' com imagem ${IMG}..."
-    distrobox create -n "$BOX_NAME" -i "$IMG" --label "managed-by=devbox"
+    distrobox create -n "$BOX_NAME" -i "$IMG"
     
     log_success "Container criado! Iniciando provisionamento..."
     distrobox enter "$BOX_NAME" -- bash -c "cd '${SCRIPT_DIR}' && ./setup.sh"
