@@ -95,3 +95,7 @@ Para adicionar uma nova linguagem, basta criar um arquivo .sh na pasta langs/ se
 - Permissões: Certifique-se de que o seu usuário tem permissão para rodar podman sem sudo.
 - Ambiente Corrompido: Se algo falhar, o script remove.sh garante uma limpeza segura.
 - Logs de Erro: Em caso de falhas, consulte /tmp/devbox_debug.log para um diagnóstico detalhado.
+
+```
+https://app.devin.ai/
+```
