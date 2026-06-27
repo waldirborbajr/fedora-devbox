@@ -30,6 +30,7 @@ if [[ ! -f "${STATE_DIR}/core_installed" ]]; then
 fi
 
 # 3. Menu Visual de Linguagens
+enter_shell=0
 while true; do
     clear
     echo -e "${BLUE}=====================================================${NC}"
@@ -51,7 +52,12 @@ while true; do
     echo -e "${BLUE}=====================================================${NC}"
     read -r -p "Escolha [0-$((i-1))]: " choice
 
-    [[ "$choice" == "0" ]] && break
+    if [[ "$choice" == "0" ]]; then
+        read -r -p "Entrar no ambiente agora? [S/n]: " enter_choice
+        [[ "$enter_choice" =~ ^([nN])$ ]] && break
+        enter_shell=1
+        break
+    fi
 
     if ! [[ "$choice" =~ ^[0-9]+$ ]]; then
         log_error "Opção inválida."
@@ -86,4 +92,9 @@ while true; do
     read -r -p "Pressione Enter para continuar..."
 done
 
-log_info "Setup finalizado."
+if [[ "$enter_shell" -eq 1 ]]; then
+    log_info "Entrando no ambiente..."
+    exec bash -l
+else
+    log_info "Setup finalizado."
+fi

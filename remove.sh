@@ -12,7 +12,9 @@ BOX_NAME="${BOX_NAME:-devbox}"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/devbox"
 
 # Verifica se o container existe e é gerenciado por nós
-if ! distrobox list --label "managed-by=devbox" 2>/dev/null | grep -q "$BOX_NAME"; then
+# (distrobox list não filtra por label; a verificação real é feita no podman, engine subjacente)
+managed_label="$(podman inspect "$BOX_NAME" --format '{{ index .Config.Labels "managed-by" }}' 2>/dev/null || true)"
+if [[ "$managed_label" != "devbox" ]]; then
     log_warn "Container '$BOX_NAME' não encontrado ou não gerenciado pelo Devbox."
     exit 0
 fi
